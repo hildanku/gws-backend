@@ -10,7 +10,7 @@ import (
 
 var FirestoreClient *firestore.Client
 
-func InitFirestore() {
+func InitFirebase() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatalf("Error loading .env file: %v", err)
 	}
@@ -20,9 +20,12 @@ func InitFirestore() {
 		log.Fatalf("FIREBASE_CREDENTIALS environment variable not set in .env")
 	}
 
+	os.Setenv("GOOGLE_APPLICATION_CREDENTIALS", credentials)
+
 	client, err := firestore.NewClient(context.Background(), os.Getenv("PROJECT_ID"))
 	if err != nil {
 		log.Fatalf("Error creating Firestore client: %v", err)
 	}
 	FirestoreClient = client
+
 }
