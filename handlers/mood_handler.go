@@ -2,12 +2,12 @@ package handlers
 
 import (
 	"context"
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gws-app/gws-backend/config"
 	"github.com/gws-app/gws-backend/models"
 	"google.golang.org/api/iterator"
-	"log"
-	"time"
 )
 
 func CreateMoodEntry(ctx *fiber.Ctx) error {
@@ -20,19 +20,17 @@ func CreateMoodEntry(ctx *fiber.Ctx) error {
 		})
 	}
 
-	if mood.Emotion == "" {
+	if mood.Mood == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(models.MoodResponse{
 			Code:   fiber.StatusBadRequest,
-			Status: "Emotion is required",
+			Status: "Mood is required",
 			Data:   nil,
 		})
 	}
 
 	mood.CreatedAt = time.Now()
-	log.Println("Saving mood entry to Firestore:", mood)
 	_, _, err := config.FirestoreClient.Collection("mood_entries").Add(context.Background(), mood)
 	if err != nil {
-		log.Println("Error saving mood entry:", err) // Log the actual error from Firestore
 		return ctx.Status(fiber.StatusInternalServerError).JSON(models.MoodResponse{
 			Code:   fiber.StatusInternalServerError,
 			Status: "Failed to create mood entry",
@@ -45,7 +43,6 @@ func CreateMoodEntry(ctx *fiber.Ctx) error {
 		Status: "Mood Created",
 		Data:   mood,
 	})
-
 }
 
 // Ambil semua data
