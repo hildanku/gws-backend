@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"time"
 
@@ -23,6 +24,17 @@ func CreateMoodEntry(ctx *fiber.Ctx) error {
 			Status: "Invalid Input",
 			Data:   nil,
 		})
+	}
+
+	// Parsing manual activities
+	if activities := ctx.FormValue("activities"); activities != "" {
+		if err := json.Unmarshal([]byte(activities), &mood.Activities); err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(models.MoodResponse{
+				Code:   fiber.StatusBadRequest,
+				Status: "Invalid activities format",
+				Data:   nil,
+			})
+		}
 	}
 
 	if mood.Mood == "" {
