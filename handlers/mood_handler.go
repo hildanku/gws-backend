@@ -2,8 +2,7 @@ package handlers
 
 import (
 	"context"
-	"fmt"
-	"path/filepath"
+	"log"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -15,6 +14,9 @@ import (
 
 func CreateMoodEntry(ctx *fiber.Ctx) error {
 	mood := new(models.Mood)
+
+	mood.UserID = ctx.FormValue("user_id")
+
 	if err := ctx.BodyParser(mood); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(models.MoodResponse{
 			Code:   fiber.StatusBadRequest,
@@ -30,6 +32,16 @@ func CreateMoodEntry(ctx *fiber.Ctx) error {
 			Data:   nil,
 		})
 	}
+
+	if mood.UserID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(models.MoodResponse{
+			Code:   fiber.StatusBadRequest,
+			Status: "User ID is required",
+			Data:   nil,
+		})
+	}
+	log.Println(mood.UserID)
+	//	uid := mood.UserID
 
 	// catch voice note
 	voiceNoteHeader, err := ctx.FormFile("voice_note_url")
@@ -50,11 +62,8 @@ func CreateMoodEntry(ctx *fiber.Ctx) error {
 		})
 	}
 
-	filename := fmt.Sprintf("%d-%s", time.Now().Unix(), filepath.Base(voiceNoteHeader.Filename))
-
-	voiceNoteURL, err := utils.UploadGCS(voiceNoteFile, filename)
+	voiceNoteURL, err := utils.UploadGCS(voiceNoteFile, mood.UserID)
 	if err != nil {
-		// return createErrorResponse(ctx, fiber.StatusInternalServerError, "Failed to upload voiceNote to cloud storage")
 		return ctx.Status(fiber.StatusInternalServerError).JSON(models.MoodResponse{
 			Code:   fiber.StatusInternalServerError,
 			Status: "Failed to upload voiceNote to cloud storage",
