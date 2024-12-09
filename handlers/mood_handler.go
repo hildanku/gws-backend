@@ -72,7 +72,7 @@ func CreateMoodEntry(ctx *fiber.Ctx) error {
 		if err != nil {
 			return ctx.Status(fiber.StatusInternalServerError).JSON(models.MoodResponse{
 				Code:   fiber.StatusInternalServerError,
-				Status: "Failed to upload voiceNote to cloud storage",
+				Status: "Failed to upload voice note to cloud storage",
 				Data:   nil,
 			})
 		}
