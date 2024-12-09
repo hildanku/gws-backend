@@ -12,3 +12,9 @@ func Routes(app *fiber.App) {
 	api.Get("/", handlers.GetAllMood)              // ambil semua data
 	api.Get("/:user_id", handlers.GetDataByUserId) // ambil semua data by userId
 }
+
+func NewsRoutes(app *fiber.App) {
+	api := app.Group("/api/recommendation")
+	//	api.Get("/get", handlers.GetRecommendation)
+	api.Get("/", handlers.GetAllNews)
+}

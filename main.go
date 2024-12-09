@@ -25,6 +25,9 @@ func main() {
 	// Init Route
 	routes.Routes(app)
 
+	// Init news
+	routes.NewsRoutes(app)
+
 	port := os.Getenv("PORT")
 	log.Fatal(app.Listen(":" + port))
 }

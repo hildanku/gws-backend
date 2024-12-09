@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log"
 	"time"
 
@@ -57,33 +58,26 @@ func CreateMoodEntry(ctx *fiber.Ctx) error {
 
 	// catch voice note
 	voiceNoteHeader, err := ctx.FormFile("voice_note_url")
-	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(models.MoodResponse{
-			Code:   fiber.StatusBadRequest,
-			Status: "Voice Note is required",
-			Data:   nil,
-		})
-	}
-	//
-	voiceNoteFile, err := voiceNoteHeader.Open()
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(models.MoodResponse{
-			Code:   fiber.StatusInternalServerError,
-			Status: "Failed to open voice note file",
-			Data:   nil,
-		})
-	}
+	if err == nil { // checking apakah ada file voice note atau nggak
+		voiceNoteFile, err := voiceNoteHeader.Open()
+		if err != nil {
+			return ctx.Status(fiber.StatusInternalServerError).JSON(models.MoodResponse{
+				Code:   fiber.StatusInternalServerError,
+				Status: "Failed to open voice note file",
+				Data:   nil,
+			})
+		}
 
-	voiceNoteURL, err := utils.UploadGCS(voiceNoteFile, mood.UserID)
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(models.MoodResponse{
-			Code:   fiber.StatusInternalServerError,
-			Status: "Failed to upload voiceNote to cloud storage",
-			Data:   nil,
-		})
+		voiceNoteURL, err := utils.UploadGCS(voiceNoteFile, mood.UserID)
+		if err != nil {
+			return ctx.Status(fiber.StatusInternalServerError).JSON(models.MoodResponse{
+				Code:   fiber.StatusInternalServerError,
+				Status: "Failed to upload voiceNote to cloud storage",
+				Data:   nil,
+			})
+		}
+		mood.VoiceNoteURL = voiceNoteURL
 	}
-
-	mood.VoiceNoteURL = voiceNoteURL
 
 	mood.CreatedAt = time.Now()
 
@@ -127,6 +121,64 @@ func GetAllMood(ctx *fiber.Ctx) error {
 		moods = append(moods, mood)
 	}
 
+	if len(moods) == 0 {
+		return ctx.Status(fiber.StatusNotFound).JSON(models.MoodResponse{
+			Code:   fiber.StatusNotFound,
+			Status: "No mood entries found",
+			Data:   nil,
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(models.MoodResponse{
+		Code:   fiber.StatusOK,
+		Status: "success",
+		Data:   moods,
+	})
+}
+
+// Ambil by UserID
+func GetDataByUserId(ctx *fiber.Ctx) error {
+	userID := ctx.Params("user_id")
+	if userID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(models.MoodResponse{
+			Code:   fiber.StatusBadRequest,
+			Status: "User ID is required",
+			Data:   nil,
+		})
+	}
+
+	// Query Firestore buat dapetin data berdasarkan UserID
+	iter := config.FirestoreClient.Collection("mood_entries").Where("UserID", "==", userID).Documents(context.Background())
+	defer iter.Stop()
+
+	var moods []models.Mood
+	for {
+		doc, err := iter.Next()
+		if errors.Is(err, iterator.Done) {
+			break
+		}
+
+		if err != nil {
+			return ctx.Status(fiber.StatusInternalServerError).JSON(models.MoodResponse{
+				Code:   fiber.StatusInternalServerError,
+				Status: "Failed to fetch mood entries",
+				Data:   nil,
+			})
+		}
+
+		var mood models.Mood
+		if err := doc.DataTo(&mood); err != nil {
+			return ctx.Status(fiber.StatusInternalServerError).JSON(models.MoodResponse{
+				Code:   fiber.StatusInternalServerError,
+				Status: "Failed to parse mood entries",
+				Data:   nil,
+			})
+		}
+
+		moods = append(moods, mood)
+	}
+
+	// Kalo gk ada data ditemukan
 	if len(moods) == 0 {
 		return ctx.Status(fiber.StatusNotFound).JSON(models.MoodResponse{
 			Code:   fiber.StatusNotFound,
