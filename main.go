@@ -28,6 +28,6 @@ func main() {
 	// Init news
 	routes.NewsRoutes(app)
 
-	port := os.Getenv("PORT_KEY")
+	port := os.Getenv("PORT")
 	log.Fatal(app.Listen(":" + port))
 }
