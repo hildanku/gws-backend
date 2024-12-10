@@ -6,7 +6,6 @@ import (
 	"github.com/gws-app/gws-backend/routes"
 	"github.com/joho/godotenv"
 	"log"
-	"os"
 )
 
 func main() {
@@ -27,9 +26,6 @@ func main() {
 	// Init news
 	routes.NewsRoutes(app)
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	port := "8080"
 	log.Fatal(app.Listen(":" + port))
 }
