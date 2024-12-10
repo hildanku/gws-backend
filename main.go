@@ -1,13 +1,12 @@
 package main
 
 import (
-	"log"
-	"os"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/gws-app/gws-backend/config"
 	"github.com/gws-app/gws-backend/routes"
 	"github.com/joho/godotenv"
+	"log"
+	"os"
 )
 
 func main() {
